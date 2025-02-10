@@ -60,6 +60,10 @@ if uploaded_file is not None:
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
         
+        if X_train.shape[1] == 0:
+            st.error("説明変数（X）が選択されていない、または無効です。")
+            st.stop()
+        
         model = LogisticRegression()
         model.fit(X_train, y_train)
         
