@@ -25,26 +25,35 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("### アップロードされたデータ")
     st.dataframe(df.head())
-    
+
     target_var = st.sidebar.selectbox("目的変数（Y）を選択", df.columns)
     feature_vars = st.sidebar.multiselect("説明変数（X）を選択", [col for col in df.columns if col != target_var])
-    
+
     if feature_vars:
         X = df[feature_vars]
         y = df[target_var]
 
-        if len(y.dropna().unique()) > 1:
+        # **欠損値を除去**
+        X = X.dropna()
+        y = y.dropna()
+
+        # **目的変数を数値化**
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+
+        # **ラベルの種類数を確認**
+        unique_classes = np.unique(y)
+        
+        if len(unique_classes) > 1:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y.dropna(), test_size=0.2, random_state=42, stratify=y.dropna()
+                X, y, test_size=0.2, random_state=42, stratify=y
             )
         else:
+            st.warning("目的変数（Y）のクラスが1種類しかないため stratify なしで分割します。")
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42, stratify=None
             )
-            st.warning("目的変数（Y）のクラスが1種類のみのため、stratifyなしで分割しました。")
-        
-        le = LabelEncoder()
-        y_train = le.fit_transform(y_train)
+
         
         if set(y_test) - set(le.classes_):
             st.error("y_test に y_train に存在しないラベルが含まれています。")
