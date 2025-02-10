@@ -33,9 +33,15 @@ if uploaded_file is not None:
         X = df[feature_vars]
         y = df[target_var]
 
-        # **欠損値を除去**
+        # **デバッグ: データの形状を確認**
+        st.write(f"X の shape: {X.shape}, y の shape: {y.shape}")
+
+        # **欠損値の除去**
         X = X.dropna()
         y = y.dropna()
+
+        # **デバッグ: y のユニーク値を確認**
+        st.write(f"y のユニーククラス: {y.unique()}")
 
         # **目的変数を数値化**
         le = LabelEncoder()
@@ -43,16 +49,26 @@ if uploaded_file is not None:
 
         # **ラベルの種類数を確認**
         unique_classes = np.unique(y)
-        
+
         if len(unique_classes) > 1:
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=y
-            )
+            stratify_option = y
         else:
             st.warning("目的変数（Y）のクラスが1種類しかないため stratify なしで分割します。")
+            stratify_option = None
+
+        # **デバッグ: 分割前にデータ確認**
+        st.write(f"最終的な X の shape: {X.shape}, y の shape: {y.shape}")
+        st.write(f"最終的な y のユニーク値: {unique_classes}")
+
+        # **データ分割**
+        try:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=None
+                X, y, test_size=0.2, random_state=42, stratify=stratify_option
             )
+        except ValueError as e:
+            st.error(f"train_test_split でエラー: {str(e)}")
+            st.stop()
+
 
         
         if set(y_test) - set(le.classes_):
