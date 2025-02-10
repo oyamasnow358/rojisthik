@@ -43,70 +43,80 @@ if uploaded_file is not None:
         y = df[target_var]
         
        # データ分割
+    if len(y.unique()) > 1:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=None)
+
 
 # ラベルエンコーディング
-        le = LabelEncoder()
-        le.fit(y_train)  # `y_train` に含まれるクラスのみをエンコーダに記憶させる
-        y_train = le.transform(y_train)
+    le = LabelEncoder()
+    le.fit(y_train)  
+    y_train = le.transform(y_train)
 
-# `y_test` に `y_train` にないラベルがあるか確認
-        y_test = y_test.map(lambda x: le.transform([x])[0] if x in le.classes_ else None)
+# `y_test` に `y_train` にないラベルがあるかチェック
+    unknown_labels = set(y) - set(le.classes_)
+    if unknown_labels:
+         st.error(f"y_test に y_train に存在しないラベルが含まれています: {unknown_labels}")
+         st.stop()
+
+y_test = le.transform(y_test)
 
 # `None` が含まれていたらエラーを出す
-        if y_test.isnull().any():
+if y_test.isnull().any():
            st.error(f"y_test に y_train に存在しないラベルが含まれています: {set(y_test.dropna())}")
            st.stop()
 
         # 欠損値を補完
-        X_train = X_train.fillna(X_train.mean())
-        X_test = X_test.fillna(X_test.mean())
+X_train = X_train.fillna(X_train.mean())
+X_test = X_test.fillna(X_test.mean())
 
         # 文字列を含む列があれば、ダミー変数に変換
-        X_train = pd.get_dummies(X_train)
-        X_test = pd.get_dummies(X_test)
+X_train = pd.get_dummies(X_train)
+X_test = pd.get_dummies(X_test)
 
         # 標準化
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
         # **ロジスティック回帰の実行**
-        model = LogisticRegression()
-        model.fit(X_train, y_train)
+model = LogisticRegression()
+model.fit(X_train, y_train)
 
-        y_pred = model.predict(X_test)
-        y_prob = model.predict_proba(X_test)[:, 1]
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
 
         # **モデル評価指標**
-        acc = accuracy_score(y_test, y_pred)
-        prec = precision_score(y_test, y_pred)
-        rec = recall_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
+if len(set(y_test)) > 1:  # 0,1の両方がある場合のみ計算
+          prec = precision_score(y_test, y_pred)
+          rec = recall_score(y_test, y_pred)
+          f1 = f1_score(y_test, y_pred)
+else:
+          prec = rec = f1 = 0.0  # どちらか一方しかない場合は0にする
 
-        st.subheader("モデル評価")
-        st.write(f"正解率 (Accuracy): {acc:.4f}")
-        st.write(f"適合率 (Precision): {prec:.4f}")
-        st.write(f"再現率 (Recall): {rec:.4f}")
-        st.write(f"F1スコア: {f1:.4f}")
+st.write(f"適合率 (Precision): {prec:.4f}")
+st.write(f"再現率 (Recall): {rec:.4f}")
+st.write(f"F1スコア: {f1:.4f}")
+
 
         # **混同行列の可視化**
-        cm = confusion_matrix(y_test, y_pred)
-        fig, ax = plt.subplots()
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-        ax.set_xlabel("予測値")
-        ax.set_ylabel("実測値")
-        st.subheader("混同行列")
-        st.pyplot(fig)
+cm = confusion_matrix(y_test, y_pred)
+fig, ax = plt.subplots()
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+ax.set_xlabel("予測値")
+ax.set_ylabel("実測値")
+st.subheader("混同行列")
+st.pyplot(fig)
 
         # **ROC曲線**
-        fpr, tpr, _ = roc_curve(y_test, y_prob)
-        roc_auc = auc(fpr, tpr)
-        fig2, ax2 = plt.subplots()
-        ax2.plot(fpr, tpr, label=f'ROC curve (area = {roc_auc:.2f})')
-        ax2.plot([0, 1], [0, 1], 'r--')
-        ax2.set_xlabel("False Positive Rate")
-        ax2.set_ylabel("True Positive Rate")
-        ax2.legend()
-        st.subheader("ROC曲線")
-        st.pyplot(fig2)
+fpr, tpr, _ = roc_curve(y_test, y_prob)
+roc_auc = auc(fpr, tpr)
+fig2, ax2 = plt.subplots()
+ax2.plot(fpr, tpr, label=f'ROC curve (area = {roc_auc:.2f})')
+ax2.plot([0, 1], [0, 1], 'r--')
+ax2.set_xlabel("False Positive Rate")
+ax2.set_ylabel("True Positive Rate")
+ax2.legend()
+st.subheader("ROC曲線")
+st.pyplot(fig2)
