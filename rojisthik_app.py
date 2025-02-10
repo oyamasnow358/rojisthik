@@ -65,6 +65,36 @@ if uploaded_file is not None:
         le = LabelEncoder()
         y_train = le.fit_transform(y_train)  # まず `y_train` をエンコード
         y_test = le.transform(y_test)  # `y_test` にも同じエンコーダを適用
+        
+
+        if uploaded_file is not None:
+         df = pd.read_csv(uploaded_file)
+         st.write("### アップロードされたデータ")
+         st.dataframe(df.head())
+
+    # 目的変数と説明変数の選択
+         target_var = st.sidebar.selectbox("目的変数（Y）を選択", df.columns)
+         feature_vars = st.sidebar.multiselect("説明変数（X）を選択", [col for col in df.columns if col != target_var])
+
+        if feature_vars:
+        # データ前処理
+         X = df[feature_vars]
+         y = df[target_var]
+
+        # ここで train_test_split を実行する
+         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # `y_train` が定義された後に LabelEncoder を適用
+         le = LabelEncoder()
+         y_train = le.fit_transform(y_train)
+         y_test = le.transform(y_test)
+
+        # `y_test` に `y_train` にないラベルがあるか確認
+         unknown_labels = set(y_test) - set(le.classes_)
+         if unknown_labels:
+            st.error(f"y_test に y_train に存在しないラベルが含まれています: {unknown_labels}")
+            st.stop()  # エラーを出して実行を止める
+
 
 # `y_test` に `y_train` にないラベルがあるか確認
         unknown_labels = set(y_test) - set(le.classes_)
