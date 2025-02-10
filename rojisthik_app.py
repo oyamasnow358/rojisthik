@@ -33,11 +33,15 @@ if uploaded_file is not None:
         X = df[feature_vars]
         y = df[target_var]
 
-        if len(y.unique()) > 1:
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+        if len(y.dropna().unique()) > 1:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y.dropna(), test_size=0.2, random_state=42, stratify=y.dropna()
+            )
         else:
-            st.error("目的変数（Y）が単一のクラスしか含まれていません。分類できません。")
-            st.stop()
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=None
+            )
+            st.warning("目的変数（Y）のクラスが1種類のみのため、stratifyなしで分割しました。")
         
         le = LabelEncoder()
         y_train = le.fit_transform(y_train)
