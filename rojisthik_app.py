@@ -49,6 +49,23 @@ if uploaded_file is not None:
         
         # データ分割
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        st.write("X_train の欠損値:\n", X_train.isnull().sum())
+        st.write("y_train の欠損値:\n", y_train.isnull().sum())
+
+# 欠損値を補完
+        X_train = X_train.fillna(X_train.mean())
+        X_test = X_test.fillna(X_test.mean())
+        y_train = pd.Series(y_train).fillna(y_train.mode()[0])
+        y_test = pd.Series(y_test).fillna(y_test.mode()[0])
+
+
+        st.write("X_train のデータ型:\n", X_train.dtypes)
+
+# 文字列を含む列があれば、ダミー変数に変換
+        X_train = pd.get_dummies(X_train)
+        X_test = pd.get_dummies(X_test)
+
         
         # 標準化
         scaler = StandardScaler()
@@ -57,7 +74,23 @@ if uploaded_file is not None:
         
         # ロジスティック回帰の実行
         model = LogisticRegression()
+        st.write("y_train のユニーク値:", y_train.unique())
+        st.write("y_train のデータ型:", y_train.dtype)
+
+        from sklearn.preprocessing import LabelEncoder
+
+        le = LabelEncoder()
+        y_train = le.fit_transform(y_train)  # 文字列ラベルを 0/1 に変換
+        y_test = le.transform(y_test)
+
+        st.write("y_train のクラス分布:\n", pd.Series(y_train).value_counts())
+
+# クラスが1種類しかない場合は警告
+        if len(pd.Series(y_train).unique()) == 1:
+           st.error("y_train に1種類のクラスしかありません。データを確認してください。")
+
         model.fit(X_train, y_train)
+
         y_pred = model.predict(X_test)
         y_prob = model.predict_proba(X_test)[:, 1]
         
