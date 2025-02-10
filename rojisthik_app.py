@@ -42,19 +42,21 @@ if uploaded_file is not None:
         X = df[feature_vars]
         y = df[target_var]
         
-        # **【修正】train_test_split を先に実行**
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+       # データ分割
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-        # **【修正】train_test_split 後に LabelEncoder を適用**
+# ラベルエンコーディング
         le = LabelEncoder()
-        y_train = le.fit_transform(y_train)
-        y_test = le.transform(y_test)
+        le.fit(y_train)  # `y_train` に含まれるクラスのみをエンコーダに記憶させる
+        y_train = le.transform(y_train)
 
-        # `y_test` に `y_train` にないラベルがあるか確認
-        unknown_labels = set(y_test) - set(le.classes_)
-        if unknown_labels:
-            st.error(f"y_test に y_train に存在しないラベルが含まれています: {unknown_labels}")
-            st.stop()  # エラーを出して実行を止める
+# `y_test` に `y_train` にないラベルがあるか確認
+        y_test = y_test.map(lambda x: le.transform([x])[0] if x in le.classes_ else None)
+
+# `None` が含まれていたらエラーを出す
+        if y_test.isnull().any():
+           st.error(f"y_test に y_train に存在しないラベルが含まれています: {set(y_test.dropna())}")
+           st.stop()
 
         # 欠損値を補完
         X_train = X_train.fillna(X_train.mean())
