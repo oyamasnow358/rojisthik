@@ -44,8 +44,19 @@ if uploaded_file is not None:
         y = df[target_var]
         
         # ラベルエンコーディング（目的変数がカテゴリ変数の場合）
-        if y.dtype == 'O':
-            y = LabelEncoder().fit_transform(y)
+        le = LabelEncoder()
+        y_train = le.fit_transform(y_train)
+
+# `y_test` に `y_train` にないラベルがあるか確認
+        unknown_labels = set(y_test) - set(le.classes_)
+
+        if unknown_labels:
+            st.error(f"y_test に y_train に存在しないラベルが含まれています: {unknown_labels}")
+            st.stop()  # エラーを出して実行を止める
+
+# `y_test` も同じエンコーディングを適用
+        y_test = le.transform(y_test)
+
         
         # データ分割
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
