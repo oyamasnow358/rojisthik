@@ -58,11 +58,20 @@ if uploaded_file is not None:
         y_test = le.transform(y_test)
 
         
-        # データ分割
+        # データ分割（先に実行）
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        st.write("X_train の欠損値:\n", X_train.isnull().sum())
-        st.write("y_train の欠損値:\n", y_train.isnull().sum())
+# ラベルエンコーディング
+        le = LabelEncoder()
+        y_train = le.fit_transform(y_train)  # まず `y_train` をエンコード
+        y_test = le.transform(y_test)  # `y_test` にも同じエンコーダを適用
+
+# `y_test` に `y_train` にないラベルがあるか確認
+        unknown_labels = set(y_test) - set(le.classes_)
+        if unknown_labels:
+            st.error(f"y_test に y_train に存在しないラベルが含まれています: {unknown_labels}")
+            st.stop()  # エラーを出して実行を止める
+
 
 # 欠損値を補完
         X_train = X_train.fillna(X_train.mean())
