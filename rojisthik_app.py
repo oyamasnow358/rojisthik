@@ -3,10 +3,23 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.font_manager as fm
+import os
+import matplotlib as mpl
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, roc_curve, auc
+
+# フォント設定
+font_path = os.path.abspath("ipaexg.ttf")  # 絶対パス
+if os.path.exists(font_path):
+    font_prop = fm.FontProperties(fname=font_path)
+    mpl.rcParams["font.family"] = font_prop.get_name()
+    plt.rc("font", family=font_prop.get_name())  # 追加
+    st.write(f"✅ フォント設定: {mpl.rcParams['font.family']}")
+else:
+    st.error("❌ フォントファイルが見つかりません。")
 
 st.title("ロジスティック回帰 Web アプリ")
 
@@ -121,8 +134,40 @@ if uploaded_file is not None:
         cm = confusion_matrix(y_test, y_pred)
         fig, ax = plt.subplots()
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-        ax.set_xlabel("予測値")
-        ax.set_ylabel("実測値")
+
+# 日本語フォントを適用
+        ax.set_xlabel("予測値", fontproperties=font_prop)
+        ax.set_ylabel("実測値", fontproperties=font_prop)
+        ax.set_title("混同行列", fontproperties=font_prop)
+
         st.subheader("混同行列")
         st.pyplot(fig)
         plt.close(fig)
+        
+        # 分析結果の説明
+        st.write("### 分析結果の概要")
+        st.write("""
+ロジスティック回帰モデルを使ってデータを分類しました。この分析結果は以下のように理解できます：
+
+1. **適合率 (Precision)**  
+   モデルが「正しい」と予測した中で、本当に正しかった割合を示します。  
+   例えば、メールのスパム判定の場合、適合率が高いほど「スパム」と予測したメールが本当にスパムである可能性が高くなります。
+
+2. **再現率 (Recall)**  
+   実際に正しいデータの中で、モデルが正しく予測できた割合を示します。  
+   例えば、病気の診断の場合、再現率が高いと「病気を見逃さない」能力が高いことを意味します。
+
+3. **F1スコア**  
+   適合率と再現率のバランスを取った指標です。これが高いほど、モデルの予測性能が全体的に良いといえます。
+
+### 混同行列について
+上の図（混同行列）は、モデルの予測結果を表しています：
+
+- **左上のセル**: クラス0（例えば「健常者」）を正しく予測した数
+- **右下のセル**: クラス1（例えば「病気」）を正しく予測した数
+- **右上のセル**: クラス0をクラス1と間違えた数
+- **左下のセル**: クラス1をクラス0と間違えた数
+
+これを見ると、モデルがどれくらい正確に予測できたか、どこで間違えたかが一目でわかります。
+""")
+
