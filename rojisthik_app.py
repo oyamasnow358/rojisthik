@@ -21,6 +21,24 @@ st.download_button("CSVテンプレートをダウンロード", data=template_c
 st.sidebar.header("データのアップロード")
 uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=["csv"])
 
+# y_train のクラス数を確認
+unique_train_classes = np.unique(y_train)
+st.write(f"y_train のユニーククラス: {unique_train_classes}")
+
+if len(unique_train_classes) < 2:
+    st.error("y_train に1種類のクラスしかありません。ロジスティック回帰は2クラス以上の分類問題で動作します。")
+    st.stop()
+
+# X_train が空でないか確認
+if X_train.shape[0] == 0 or X_train.shape[1] == 0:
+    st.error("X_train が空です。説明変数を選択しているか確認してください。")
+    st.stop()
+
+# 学習開始
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("### アップロードされたデータ")
