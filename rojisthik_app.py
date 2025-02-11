@@ -33,7 +33,12 @@ if uploaded_file is not None:
     target_var = st.sidebar.selectbox("目的変数（Y）を選択", df.columns)
     feature_vars = st.sidebar.multiselect("説明変数（X）を選択", [col for col in df.columns if col != target_var])
 
-    if feature_vars:
+    # ロジスティック回帰分析を実行するボタン
+    if st.sidebar.button("ロジスティック回帰分析を実行"):
+        if not feature_vars:
+            st.error("エラー: 説明変数（X）を選択してください。")
+            st.stop()
+
         X = df[feature_vars]
         y = df[target_var]
 
@@ -75,32 +80,31 @@ if uploaded_file is not None:
         st.write(f"y_train のユニーククラス: {unique_train_classes}")
 
         if len(unique_train_classes) < 2:
-           st.error("y_train に1種類のクラスしかありません。データのバランスを確認してください。")
-           st.stop()
+            st.error("y_train に1種類のクラスしかありません。データのバランスを確認してください。")
+            st.stop()
 
-
-# 特徴量間の相関を表示
+        # 特徴量間の相関を表示
         st.write("### 特徴量間の相関係数")
         st.dataframe(df.corr())
 
-# **データの標準化**
+        # **データの標準化**
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
 
-# **ロジスティック回帰モデルの学習**
+        # **ロジスティック回帰モデルの学習**
         model = LogisticRegression()
         model.fit(X_train, y_train)
 
-# **モデルが学習されているか確認**
-    if hasattr(model, "coef_"):
-    # モデルの係数を表示
-        st.write("### ロジスティック回帰の係数")
-        feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
-        st.dataframe(feature_importance)
-    else:
-        st.error("モデルの学習に失敗しました。特徴量やデータを確認してください。")
-
+        # **モデルが学習されているか確認**
+        if hasattr(model, "coef_"):
+            # モデルの係数を表示
+            st.write("### ロジスティック回帰の係数")
+            feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
+            st.dataframe(feature_importance)
+        else:
+            st.error("モデルの学習に失敗しました。特徴量やデータを確認してください。")
+            st.stop()
 
         # **予測と評価**
         y_pred = model.predict(X_test)
@@ -121,3 +125,4 @@ if uploaded_file is not None:
         ax.set_ylabel("実測値")
         st.subheader("混同行列")
         st.pyplot(fig)
+        plt.close(fig)
