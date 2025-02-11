@@ -50,24 +50,28 @@ if uploaded_file is not None:
         # **ラベルの種類数を確認**
         unique_classes = np.unique(y)
 
-        if len(unique_classes) > 1:
-            stratify_option = y
+        # クラスごとのデータ数を確認
+        class_counts = np.bincount(y)
+        min_class_size = class_counts.min()
+
+# クラスごとのデータ数を表示
+        st.write(f"クラスごとのデータ数: {dict(enumerate(class_counts))}")
+
+# stratify を適用するか決定
+        if min_class_size < 2:
+           st.warning("少なくとも1つのクラスにデータが1つしかないため、stratify なしで分割します。")
+           stratify_option = None
         else:
-            st.warning("目的変数（Y）のクラスが1種類しかないため stratify なしで分割します。")
-            stratify_option = None
+           stratify_option = y
 
-        # **デバッグ: 分割前にデータ確認**
-        st.write(f"最終的な X の shape: {X.shape}, y の shape: {y.shape}")
-        st.write(f"最終的な y のユニーク値: {unique_classes}")
-
-        # **データ分割**
+# データ分割
         try:
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=stratify_option
-            )
+           X_train, X_test, y_train, y_test = train_test_split(
+           X, y, test_size=0.2, random_state=42, stratify=stratify_option
+        )
         except ValueError as e:
-            st.error(f"train_test_split でエラー: {str(e)}")
-            st.stop()
+           st.error(f"train_test_split でエラー: {str(e)}")
+           st.stop()
 
 
         
