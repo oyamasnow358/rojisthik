@@ -70,22 +70,28 @@ if uploaded_file is not None:
             st.error(f"train_test_split でエラー: {str(e)}")
             st.stop()
 
-        # **訓練データのクラス数を確認**
+        # 訓練データのクラス数を確認
         unique_train_classes = np.unique(y_train)
         st.write(f"y_train のユニーククラス: {unique_train_classes}")
 
         if len(unique_train_classes) < 2:
-            st.error("y_train に1種類のクラスしかありません。データを確認してください。")
-            st.stop()
+           st.error("y_train に1種類のクラスしかありません。データのバランスを確認してください。")
+           st.stop()
+
 
 # 特徴量間の相関を表示
         st.write("### 特徴量間の相関係数")
         st.dataframe(df.corr())
 
-# モデルの係数を表示
-        st.write("### ロジスティック回帰の係数")
-        feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
-        st.dataframe(feature_importance)
+# モデルが学習されているか確認
+        if hasattr(model, "coef_"):
+    # モデルの係数を表示
+           st.write("### ロジスティック回帰の係数")
+           feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
+           st.dataframe(feature_importance)
+        else:
+           st.error("モデルの学習に失敗しました。特徴量やデータを確認してください。")
+
 
         # **データの標準化**
         scaler = StandardScaler()
