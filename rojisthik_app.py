@@ -16,7 +16,7 @@ template_csv = """クラス,特徴量1,特徴量2,特徴量3
 1,1.2,0.8,2.5
 0,3.0,1.5,2.0
 1,2.1,3.3,1.5
-1,2,4,3,3,2,6
+1,2.4,3.3,2.6
 0,3.0,1.5,2.0
 """
 st.download_button("CSVテンプレートをダウンロード", data=template_csv.encode('utf-8-sig'), file_name="template.csv", mime="text/csv")
