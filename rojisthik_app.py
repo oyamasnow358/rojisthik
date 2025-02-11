@@ -16,6 +16,8 @@ template_csv = """クラス,特徴量1,特徴量2,特徴量3
 1,1.2,0.8,2.5
 0,3.0,1.5,2.0
 1,2.1,3.3,1.5
+1,2,4,3,3,2,6
+0,3.0,1.5,2.0
 """
 st.download_button("CSVテンプレートをダウンロード", data=template_csv.encode('utf-8-sig'), file_name="template.csv", mime="text/csv")
 
@@ -35,40 +37,40 @@ if uploaded_file is not None:
         X = df[feature_vars]
         y = df[target_var]
 
-        # **デバッグ: y のユニーククラスを確認**
-        unique_classes, counts = np.unique(y, return_counts=True)
-        st.write(f"y のユニーククラス: {dict(zip(unique_classes, counts))}")
-
-        if len(unique_classes) < 2:
-            st.error("y に1種類のクラスしかありません。ロジスティック回帰は2クラス以上の分類問題で動作します。")
+        # **データ数を確認**
+        if len(y) < 5:
+            st.error("データ数が少なすぎます。最低でも5行以上のデータをアップロードしてください。")
             st.stop()
 
         # **目的変数を数値化**
         le = LabelEncoder()
         y = le.fit_transform(y)
 
-        # **クラスごとのデータ数を表示**
-        class_counts = np.bincount(y)
-        st.write(f"クラスごとのデータ数: {dict(enumerate(class_counts))}")
+        # **クラスごとのデータ数を確認**
+        unique_classes, counts = np.unique(y, return_counts=True)
+        st.write(f"クラスごとのデータ数: {dict(zip(unique_classes, counts))}")
+
+        if len(unique_classes) < 2:
+            st.error("y に1種類のクラスしかありません。ロジスティック回帰は2クラス以上の分類問題で動作します。")
+            st.stop()
 
         # **stratify を適用するか決定**
-        min_class_size = class_counts.min()
-        if min_class_size < 2:
-            st.warning("少なくとも1つのクラスにデータが1つしかないため、stratify なしで分割します。")
-            stratify_option = None
-        else:
-            stratify_option = y
+        min_class_size = counts.min()
+        stratify_option = y if min_class_size >= 2 else None
+
+        # **テストサイズの調整**
+        test_size = 0.2 if len(y) > 10 else 0.4  # データが少ない場合、テストサイズを増やす
 
         # **データ分割**
         try:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=stratify_option
+                X, y, test_size=test_size, random_state=42, stratify=stratify_option
             )
         except ValueError as e:
             st.error(f"train_test_split でエラー: {str(e)}")
             st.stop()
 
-        # **再度 y_train のクラス数を確認**
+        # **訓練データのクラス数を確認**
         unique_train_classes = np.unique(y_train)
         st.write(f"y_train のユニーククラス: {unique_train_classes}")
 
