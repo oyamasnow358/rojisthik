@@ -34,20 +34,16 @@ template_csv = """クラス,特徴量1,特徴量2,特徴量3
 """
 st.download_button("CSVテンプレートをダウンロード", data=template_csv.encode('utf-8-sig'), file_name="template.csv", mime="text/csv")
 
-# CSVファイルのアップロード
-st.sidebar.header("データのアップロード")
-uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=["csv"])
+# 初心者向け説明の表示切り替え
+if "show_explanation" not in st.session_state:
+    st.session_state.show_explanation = False
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.write("### アップロードされたデータ")
-    st.dataframe(df.head())
+# ボタンを押すたびにセッションステートを切り替える
+if st.button("初心者向け説明を表示/非表示"):
+    st.session_state.show_explanation = not st.session_state.show_explanation
 
-    target_var = st.sidebar.selectbox("目的変数（Y）を選択", df.columns)
-    feature_vars = st.sidebar.multiselect("説明変数（X）を選択", [col for col in df.columns if col != target_var])
-    
-    # 初心者向け説明の表示ボタン
-if st.sidebar.button("初心者向け説明を表示"):
+# セッションステートに基づいて説明を表示
+if st.session_state.show_explanation:
     st.markdown("""
     ## **クラス（目的変数）とは？**
     「クラス」は、予測したいデータのカテゴリや状態を指します。
@@ -92,21 +88,29 @@ if st.sidebar.button("初心者向け説明を表示"):
 
 
 
-    # ロジスティック回帰分析を実行するボタン
-    # CSVファイルがアップロードされているか確認
+
+# CSVファイルのアップロード
+st.sidebar.header("データのアップロード")
+uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=["csv"])
+
 if uploaded_file is not None:
-    # 必要な変数が選択されているか確認
-    if target_var and feature_vars:
-        # ロジスティック回帰分析を実行するセクション
-     if st.sidebar.button("ロジスティック回帰分析を実行"):
+    df = pd.read_csv(uploaded_file)
+    st.write("### アップロードされたデータ")
+    st.dataframe(df.head())
+
+    target_var = st.sidebar.selectbox("目的変数（Y）を選択", df.columns)
+    feature_vars = st.sidebar.multiselect("説明変数（X）を選択", [col for col in df.columns if col != target_var])
+    
+
+    # ロジスティック回帰分析を実行するボタン
+    if st.sidebar.button("ロジスティック回帰分析を実行"):
         if not feature_vars:
             st.error("エラー: 説明変数（X）を選択してください。")
             st.stop()
 
         X = df[feature_vars]
         y = df[target_var]
-     else:
-        st.sidebar.error("目的変数と説明変数を選択してください。")
+
         # **データ数を確認**
         if len(y) < 5:
             st.error("データ数が少なすぎます。最低でも5行以上のデータをアップロードしてください。")
