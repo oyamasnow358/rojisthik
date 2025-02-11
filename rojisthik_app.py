@@ -47,17 +47,19 @@ if uploaded_file is not None:
         le = LabelEncoder()
         y = le.fit_transform(y)
 
-        # **再度ユニーククラスを確認**
-        unique_classes = np.unique(y)
-        st.write(f"数値変換後の y のユニーククラス: {unique_classes}")
-
         # **クラスごとのデータ数を表示**
         class_counts = np.bincount(y)
         st.write(f"クラスごとのデータ数: {dict(enumerate(class_counts))}")
 
-        # **データ分割時に stratify を適用**
-        stratify_option = y if len(unique_classes) > 1 else None
+        # **stratify を適用するか決定**
+        min_class_size = class_counts.min()
+        if min_class_size < 2:
+            st.warning("少なくとも1つのクラスにデータが1つしかないため、stratify なしで分割します。")
+            stratify_option = None
+        else:
+            stratify_option = y
 
+        # **データ分割**
         try:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42, stratify=stratify_option
