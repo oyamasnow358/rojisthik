@@ -78,6 +78,15 @@ if uploaded_file is not None:
             st.error("y_train に1種類のクラスしかありません。データを確認してください。")
             st.stop()
 
+# 特徴量間の相関を表示
+        st.write("### 特徴量間の相関係数")
+        st.dataframe(df.corr())
+
+# モデルの係数を表示
+        st.write("### ロジスティック回帰の係数")
+        feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
+        st.dataframe(feature_importance)
+
         # **データの標準化**
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
