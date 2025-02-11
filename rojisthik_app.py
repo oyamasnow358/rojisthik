@@ -83,24 +83,24 @@ if uploaded_file is not None:
         st.write("### 特徴量間の相関係数")
         st.dataframe(df.corr())
 
-# モデルが学習されているか確認
-        if hasattr(model, "coef_"):
-    # モデルの係数を表示
-           st.write("### ロジスティック回帰の係数")
-           feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
-           st.dataframe(feature_importance)
-        else:
-           st.error("モデルの学習に失敗しました。特徴量やデータを確認してください。")
-
-
-        # **データの標準化**
+# **データの標準化**
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
 
-        # **ロジスティック回帰モデルの学習**
+# **ロジスティック回帰モデルの学習**
         model = LogisticRegression()
         model.fit(X_train, y_train)
+
+# **モデルが学習されているか確認**
+    if hasattr(model, "coef_"):
+    # モデルの係数を表示
+        st.write("### ロジスティック回帰の係数")
+        feature_importance = pd.DataFrame(model.coef_.flatten(), index=feature_vars, columns=["係数"])
+        st.dataframe(feature_importance)
+    else:
+        st.error("モデルの学習に失敗しました。特徴量やデータを確認してください。")
+
 
         # **予測と評価**
         y_pred = model.predict(X_test)
