@@ -93,14 +93,20 @@ if st.sidebar.button("初心者向け説明を表示"):
 
 
     # ロジスティック回帰分析を実行するボタン
-    if st.sidebar.button("ロジスティック回帰分析を実行"):
+    # CSVファイルがアップロードされているか確認
+if uploaded_file is not None:
+    # 必要な変数が選択されているか確認
+    if target_var and feature_vars:
+        # ロジスティック回帰分析を実行するセクション
+     if st.sidebar.button("ロジスティック回帰分析を実行"):
         if not feature_vars:
             st.error("エラー: 説明変数（X）を選択してください。")
             st.stop()
 
         X = df[feature_vars]
         y = df[target_var]
-
+     else:
+        st.sidebar.error("目的変数と説明変数を選択してください。")
         # **データ数を確認**
         if len(y) < 5:
             st.error("データ数が少なすぎます。最低でも5行以上のデータをアップロードしてください。")
