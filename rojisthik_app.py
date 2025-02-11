@@ -21,24 +21,6 @@ st.download_button("CSVテンプレートをダウンロード", data=template_c
 st.sidebar.header("データのアップロード")
 uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=["csv"])
 
-# y_train のクラス数を確認
-unique_train_classes = np.unique(y_train)
-st.write(f"y_train のユニーククラス: {unique_train_classes}")
-
-if len(unique_train_classes) < 2:
-    st.error("y_train に1種類のクラスしかありません。ロジスティック回帰は2クラス以上の分類問題で動作します。")
-    st.stop()
-
-# X_train が空でないか確認
-if X_train.shape[0] == 0 or X_train.shape[1] == 0:
-    st.error("X_train が空です。説明変数を選択しているか確認してください。")
-    st.stop()
-
-# 学習開始
-model = LogisticRegression()
-model.fit(X_train, y_train)
-
-
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("### アップロードされたデータ")
@@ -72,54 +54,66 @@ if uploaded_file is not None:
         class_counts = np.bincount(y)
         min_class_size = class_counts.min()
 
-# クラスごとのデータ数を表示
+        # クラスごとのデータ数を表示
         st.write(f"クラスごとのデータ数: {dict(enumerate(class_counts))}")
 
-# stratify を適用するか決定
+        # stratify を適用するか決定
         if min_class_size < 2:
-           st.warning("少なくとも1つのクラスにデータが1つしかないため、stratify なしで分割します。")
-           stratify_option = None
+            st.warning("少なくとも1つのクラスにデータが1つしかないため、stratify なしで分割します。")
+            stratify_option = None
         else:
-           stratify_option = y
+            stratify_option = y
 
-# データ分割
+        # データ分割
         try:
-           X_train, X_test, y_train, y_test = train_test_split(
-           X, y, test_size=0.2, random_state=42, stratify=stratify_option
-        )
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=stratify_option
+            )
         except ValueError as e:
-           st.error(f"train_test_split でエラー: {str(e)}")
-           st.stop()
+            st.error(f"train_test_split でエラー: {str(e)}")
+            st.stop()
 
-
-        
         if set(y_test) - set(le.classes_):
             st.error("y_test に y_train に存在しないラベルが含まれています。")
             st.stop()
-        
+
         y_test = le.transform(y_test)
-        
+
         X_train = X_train.fillna(X_train.mean())
         X_test = X_test.fillna(X_test.mean())
-        
+
         X_train = pd.get_dummies(X_train)
         X_test = pd.get_dummies(X_test)
-        
+
         X_train, X_test = X_train.align(X_test, join='left', axis=1, fill_value=0)
-        
+
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
-        
+
         if X_train.shape[1] == 0:
             st.error("説明変数（X）が選択されていない、または無効です。")
             st.stop()
-        
+
+        # ✅ y_train のクラス数を確認
+        unique_train_classes = np.unique(y_train)
+        st.write(f"y_train のユニーククラス: {unique_train_classes}")
+
+        if len(unique_train_classes) < 2:
+            st.error("y_train に1種類のクラスしかありません。ロジスティック回帰は2クラス以上の分類問題で動作します。")
+            st.stop()
+
+        # ✅ X_train が空でないか確認
+        if X_train.shape[0] == 0 or X_train.shape[1] == 0:
+            st.error("X_train が空です。説明変数を選択しているか確認してください。")
+            st.stop()
+
+        # 学習開始
         model = LogisticRegression()
         model.fit(X_train, y_train)
-        
+
         y_pred = model.predict(X_test)
-        
+
         if len(set(y_test)) > 1:
             prec = precision_score(y_test, y_pred)
             rec = recall_score(y_test, y_pred)
@@ -128,11 +122,11 @@ if uploaded_file is not None:
         else:
             prec = rec = f1 = 0.0
             y_prob = np.zeros_like(y_test, dtype=float)
-        
+
         st.write(f"適合率 (Precision): {prec:.4f}")
         st.write(f"再現率 (Recall): {rec:.4f}")
         st.write(f"F1スコア: {f1:.4f}")
-        
+
         cm = confusion_matrix(y_test, y_pred)
         fig, ax = plt.subplots()
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
@@ -140,7 +134,7 @@ if uploaded_file is not None:
         ax.set_ylabel("実測値")
         st.subheader("混同行列")
         st.pyplot(fig)
-        
+
         if len(set(y_test)) > 1:
             fpr, tpr, _ = roc_curve(y_test, y_prob)
             roc_auc = auc(fpr, tpr)
